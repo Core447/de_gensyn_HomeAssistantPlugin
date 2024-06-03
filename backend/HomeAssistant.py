@@ -33,6 +33,14 @@ PING_INTERVAL = 30
 
 RETRY_CONNECTION = False
 
+def log_method_call(method):
+    def wrapper(*args, **kwargs):
+        print(f"call {method.__name__}")
+        result = method(*args, **kwargs)
+        print(f"finished {method.__name__}")
+        return result
+    return wrapper
+
 
 class HomeAssistantBackend(BackendBase):
     _websocket: WebSocket = None
@@ -49,9 +57,11 @@ class HomeAssistantBackend(BackendBase):
     _reconnect_thread: Thread = None
     _action_list: List[Callable] = []
 
+    @log_method_call
     def __init__(self):
         super().__init__()
 
+    @log_method_call
     def set_host(self, host: str) -> None:
 
         if "//" in host:
@@ -69,6 +79,7 @@ class HomeAssistantBackend(BackendBase):
 
         self.reconnect()
 
+    @log_method_call
     def set_port(self, port: str) -> None:
         if self._port == port:
             return
@@ -76,6 +87,7 @@ class HomeAssistantBackend(BackendBase):
         self._port = port
         self.reconnect()
 
+    @log_method_call
     def set_ssl(self, ssl: bool) -> None:
         if self._ssl == ssl:
             return
@@ -83,6 +95,7 @@ class HomeAssistantBackend(BackendBase):
         self._ssl = ssl
         self.reconnect()
 
+    @log_method_call
     def set_token(self, token: str) -> None:
         if self._token == token:
             return
@@ -90,9 +103,11 @@ class HomeAssistantBackend(BackendBase):
         self._token = token
         self.reconnect()
 
+    @log_method_call
     def set_connection_status_callback(self, callback: Callable) -> None:
         self._connection_status_callback = callback
 
+    @log_method_call
     def reconnect(self) -> bool:
         self.disconnect()
         success = self.connect()
@@ -107,6 +122,7 @@ class HomeAssistantBackend(BackendBase):
 
         return success
 
+    @log_method_call
     def connect(self) -> bool:
         if self.is_connected():
             # already connected
@@ -169,6 +185,7 @@ class HomeAssistantBackend(BackendBase):
 
         return True
 
+    @log_method_call
     def disconnect(self) -> None:
         self._connection_status_callback(DISCONNECTING)
 
@@ -183,6 +200,7 @@ class HomeAssistantBackend(BackendBase):
 
         self._connection_status_callback(NOT_CONNECTED)
 
+    @log_method_call
     def _auth(self):
         websocket_host = f'{"wss://" if self._ssl else "ws://"}{self._host}:{self._port}{HASS_WEBSOCKET_API}'
 
@@ -218,6 +236,7 @@ class HomeAssistantBackend(BackendBase):
 
         return new_websocket
 
+    @log_method_call
     def _async_run_recv_loop(self):
         # wait for entities update finishing
         ENTITIES_UPDATE_SEMAPHORE.acquire()
@@ -282,6 +301,7 @@ class HomeAssistantBackend(BackendBase):
             global RETRY_CONNECTION
             RETRY_CONNECTION = True
 
+    @log_method_call
     def get_state(self, entity_id: str) -> str:
         if not self.connect() or "." not in entity_id:
             return "off"
@@ -292,6 +312,7 @@ class HomeAssistantBackend(BackendBase):
 
         return self._entities[domain][entity_id]["state"]
 
+    @log_method_call
     def get_domains(self) -> list:
         if not self.connect():
             return []
@@ -301,6 +322,7 @@ class HomeAssistantBackend(BackendBase):
 
         return self._domains
 
+    @log_method_call
     def get_entity(self, entity_id: str) -> dict:
         if not entity_id or "." not in entity_id:
             return {}
@@ -308,6 +330,7 @@ class HomeAssistantBackend(BackendBase):
         domain = entity_id.split(".")[0]
         return self._entities.get(domain, {}).get(entity_id, {})
 
+    @log_method_call
     def get_entities(self, domain: str) -> list:
         if not self.connect() or not domain:
             return []
@@ -317,6 +340,7 @@ class HomeAssistantBackend(BackendBase):
 
         return list(self._entities.get(domain, {}).keys())
 
+    @log_method_call
     def _load_domains_and_entities(self) -> None:
         message = self.create_message("get_states")
 
@@ -361,6 +385,7 @@ class HomeAssistantBackend(BackendBase):
         self._domains = domains
         self._entities = entities
 
+    @log_method_call
     def get_services(self, domain: str) -> list:
         if not self.connect() or not domain:
             return []
@@ -389,6 +414,7 @@ class HomeAssistantBackend(BackendBase):
 
         return self._services.get(domain, [])
 
+    @log_method_call
     def call_service(self, entity_id: str, service: str) -> None:
         if not self.connect():
             return
@@ -407,10 +433,12 @@ class HomeAssistantBackend(BackendBase):
         if not success:
             log.error(f"Error calling service {service} for entity {entity_id}.")
 
+    @log_method_call
     def create_message(self, message_type: str) -> Dict[str, Any]:
         self._message_id += 1
         return {ID: self._message_id, FIELD_TYPE: message_type}
 
+    @log_method_call
     def add_tracked_entity(self, entity_id: str, action_uid: str, action_entity_updated: Callable) -> None:
         if not entity_id or not self.connect():
             return
@@ -445,6 +473,7 @@ class HomeAssistantBackend(BackendBase):
 
         entity_settings["subscription_id"] = message_id
 
+    @log_method_call
     def remove_tracked_entity(self, entity_id: str, action_uid: str) -> None:
         if not self.connect():
             return
@@ -465,9 +494,11 @@ class HomeAssistantBackend(BackendBase):
 
         entity_settings["subscription_id"] = -1
 
+    @log_method_call
     def is_connected(self) -> bool:
         return self._websocket and self._websocket.connected
 
+    @log_method_call
     def _send_and_wait_for_response(self, message: Dict[str, str | int]) -> str:
         WEBSOCKET_SEMAPHORE.acquire()
 
@@ -479,6 +510,7 @@ class HomeAssistantBackend(BackendBase):
 
         return response
 
+    @log_method_call
     def _keep_alive(self):
         while True:
             sleep(PING_INTERVAL)
@@ -488,6 +520,7 @@ class HomeAssistantBackend(BackendBase):
                 self._connection_status_callback(NOT_CONNECTED)
                 return
 
+    @log_method_call
     def retry_connect(self):
         sleep(10)
 
@@ -502,15 +535,17 @@ class HomeAssistantBackend(BackendBase):
 
             count = count + 1
 
+    @log_method_call
     def register_action(self, action: Callable):
         if action not in self._action_list:
             self._action_list.append(action)
 
+    @log_method_call
     def remove_action(self, action: Callable):
         if action in self._action_list:
             self._action_list.remove(action)
 
-
+@log_method_call
 def _get_field_from_message(message: str, field: str) -> Any:
     if not message:
         return ""

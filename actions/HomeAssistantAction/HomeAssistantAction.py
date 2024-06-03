@@ -33,6 +33,14 @@ gi.require_version("Adw", "1")
 from gi.repository.Gtk import Align, Label, SignalListItemFactory, StringList
 from gi.repository.Adw import ComboRow, PreferencesGroup, SpinRow, SwitchRow
 
+def log_method_call(method):
+    def wrapper(*args, **kwargs):
+        print(f"call {method.__name__}")
+        result = method(*args, **kwargs)
+        print(f"finished {method.__name__}")
+        return result
+    return wrapper
+
 
 class HomeAssistantAction(HomeAssistantActionBase):
     mdi_icons: Dict[str, str]
@@ -65,12 +73,14 @@ class HomeAssistantAction(HomeAssistantActionBase):
     text_attribute_combo: ComboRow
     text_attribute_model: StringList
 
+    @log_method_call
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", MDI_SVG_JSON)
         self.mdi_icons = json.loads(open(filename, "r").read())
 
+    @log_method_call
     def on_ready(self) -> None:
         if not self.plugin_base.backend.is_connected():
             self.plugin_base.backend.register_action(self.on_ready)
@@ -84,19 +94,22 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.entity_updated(entity)
 
+    @log_method_call
     def on_removed_from_cache(self) -> None:
         self.plugin_base.backend.remove_action(self.on_ready)
         self.plugin_base.backend.remove_tracked_entity(self.get_setting(SETTING_ENTITY_ENTITY),
                                                        f"{self.page.json_path}{self.page_coords}")
-
+    @log_method_call
     def on_key_down(self) -> None:
         if self.get_setting(SETTING_SERVICE_SERVICE_ON_KEY_DOWN, DEFAULT_SERVICE_SERVICE_ON_KEY_DOWN):
             self.call_service()
 
+    @log_method_call
     def on_key_up(self) -> None:
         if self.get_setting(SETTING_SERVICE_SERVICE_ON_KEY_UP, DEFAULT_SERVICE_SERVICE_ON_KEY_UP):
             self.call_service()
 
+    @log_method_call
     def call_service(self) -> None:
         settings = self.get_settings()
         entity = settings.get(SETTING_ENTITY_ENTITY)
@@ -107,6 +120,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.plugin_base.backend.call_service(entity, service)
 
+    @log_method_call
     def get_config_rows(self) -> list:
         self.lm = self.plugin_base.locale_manager
 
@@ -133,6 +147,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         return [*rows, entity_group, service_group, icon_group, text_group]
 
+    @log_method_call
     def _get_entity_group(self) -> PreferencesGroup:
         self.entity_domain_combo = ComboRow(title=self.lm.get(LABEL_ENTITY_DOMAIN))
         self.entity_domain_combo.set_factory(self.combo_factory)
@@ -148,6 +163,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         return group
 
+    @log_method_call
     def _get_service_group(self) -> PreferencesGroup:
         self.service_service_combo = ComboRow(title=self.lm.get(LABEL_SERVICE_SERVICE))
         self.service_service_combo.set_factory(self.combo_factory)
@@ -170,6 +186,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         return group
 
+    @log_method_call
     def _get_icon_group(self) -> PreferencesGroup:
         self.icon_show_icon = SwitchRow(title=self.lm.get(LABEL_ICON_SHOW_ICON))
         self.icon_show_icon.set_active(self.get_setting(SETTING_ICON_SHOW_ICON, DEFAULT_ICON_SHOW_ICON))
@@ -190,7 +207,8 @@ class HomeAssistantAction(HomeAssistantActionBase):
         group.add(self.icon_opacity)
 
         return group
-
+    
+    @log_method_call
     def _get_text_group(self) -> PreferencesGroup:
         self.text_show_text = SwitchRow(title=self.lm.get(LABEL_TEXT_SHOW_TEXT))
         self.text_show_text.set_active(self.get_setting(SETTING_TEXT_SHOW_TEXT, DEFAULT_TEXT_SHOW_TEXT))
@@ -236,6 +254,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         return group
 
+    @log_method_call
     def _connect_rows(self) -> None:
         self.entity_domain_combo.connect(CONNECT_NOTIFY_SELECTED, self.on_change_domain)
         self.entity_entity_combo.connect(CONNECT_NOTIFY_SELECTED, self.on_change_entity)
@@ -258,6 +277,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
         self.text_unit_line_break.connect(CONNECT_NOTIFY_ACTIVE, self.on_change_switch, SETTING_TEXT_UNIT_LINE_BREAK)
         self.text_attribute_combo.connect(CONNECT_NOTIFY_SELECTED, self.on_change_combo, SETTING_TEXT_ATTRIBUTE)
 
+    @log_method_call
     def on_change_switch(self, switch, *args):
         settings = self.get_settings()
         settings[args[1]] = switch.get_active()
@@ -270,6 +290,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.entity_updated(settings.get(SETTING_ENTITY_ENTITY))
 
+    @log_method_call
     def _factory_bind(self, _, item):
         label = Label(halign=Align.END)
         item.set_child(label)
@@ -282,6 +303,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
         label.set_text(text)
         label.set_tooltip_text(friendly_name if friendly_name else text)
 
+    @log_method_call
     def on_change_domain(self, combo, _):
         settings = self.get_settings()
 
@@ -310,6 +332,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.set_enabled_disabled()
 
+    @log_method_call
     def on_change_entity(self, combo, _):
         settings = self.get_settings()
         old_entity = settings[SETTING_ENTITY_ENTITY]
@@ -334,6 +357,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.set_enabled_disabled()
 
+    @log_method_call
     def on_change_combo(self, combo, *args):
         value = combo.get_selected_item().get_string()
         settings = self.get_settings()
@@ -344,6 +368,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.entity_updated(settings.get(SETTING_ENTITY_ENTITY))
 
+    @log_method_call
     def on_change_spin(self, spin, *args):
         size = spin.get_value()
         settings = self.get_settings()
@@ -352,6 +377,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         self.entity_updated(settings.get(SETTING_ENTITY_ENTITY))
 
+    @log_method_call
     def entity_updated(self, entity: str, state: dict = None) -> None:
         settings = self.get_settings()
 
@@ -454,6 +480,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
             self.set_center_label(None)
             self.set_bottom_label(None)
 
+    @log_method_call
     def load_domains(self):
         old_domain = self.get_settings().get(SETTING_ENTITY_DOMAIN, EMPTY_STRING)
 
@@ -470,6 +497,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
             self.load_entities()
             self.load_services()
 
+    @log_method_call
     def load_entities(self):
         old_entity = self.get_settings().get(SETTING_ENTITY_ENTITY, EMPTY_STRING)
 
@@ -484,6 +512,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         set_value_in_combo(self.entity_entity_combo, self.entity_entity_model, old_entity)
 
+    @log_method_call
     def load_services(self):
         old_service = self.get_settings().get(SETTING_SERVICE_SERVICE, EMPTY_STRING)
 
@@ -497,6 +526,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         set_value_in_combo(self.service_service_combo, self.service_service_model, old_service)
 
+    @log_method_call
     def load_attributes(self):
         old_attribute = self.get_settings().get(SETTING_TEXT_ATTRIBUTE, EMPTY_STRING)
 
@@ -511,12 +541,14 @@ class HomeAssistantAction(HomeAssistantActionBase):
 
         set_value_in_combo(self.text_attribute_combo, self.text_attribute_model, old_attribute)
 
+    @log_method_call
     def get_setting(self, setting: str, default: Any = None) -> Any:
         settings = self.get_settings()
         value = settings.setdefault(setting, default)
         self.set_settings(settings)
         return value
 
+    @log_method_call
     def set_enabled_disabled(self) -> None:
         domain = self.entity_domain_combo.get_selected_item().get_string() if self.entity_domain_combo.get_selected_item() else False
         domain_selected = bool(domain)
@@ -566,6 +598,7 @@ class HomeAssistantAction(HomeAssistantActionBase):
             self.text_unit_line_break.set_sensitive(False)
             self.text_attribute_combo.set_sensitive(False)
 
+    @log_method_call
     def _get_icon(self, state: dict) -> str:
         settings = self.get_settings()
 
@@ -610,20 +643,22 @@ class HomeAssistantAction(HomeAssistantActionBase):
             .replace("<color>", color)
             .replace("<opacity>", opacity)
         )
-
+    
+    @log_method_call
     def _get_icon_path(self, name: str) -> str:
         if "mdi:" in name:
             name = name.replace("mdi:", EMPTY_STRING)
 
         return self.mdi_icons.get(name, EMPTY_STRING)
 
+    @log_method_call
     def _get_icon_svg(self, name: str, path: str) -> str:
         if not path:
             return EMPTY_STRING
 
         return f'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 24 24"><title>{name}</title><path d="{path}" fill="<color>" opacity="<opacity>" /></svg>'
 
-
+@log_method_call
 def set_value_in_combo(combo: ComboRow, model: StringList, value: str):
     if not value:
         return

@@ -7,6 +7,14 @@ from src.backend.PluginManager.ActionHolder import ActionHolder
 from src.backend.PluginManager.PluginBase import PluginBase
 from .actions.HomeAssistantAction.HomeAssistantAction import HomeAssistantAction
 
+def log_method_call(method):
+    def wrapper(*args, **kwargs):
+        print(f"call {method.__name__}")
+        result = method(*args, **kwargs)
+        print(f"finished {method.__name__}")
+        return result
+    return wrapper
+
 
 class HomeAssistant(PluginBase):
     def __init__(self):
@@ -34,13 +42,15 @@ class HomeAssistant(PluginBase):
         token = settings.setdefault(SETTING_TOKEN, EMPTY_STRING)
 
         backend_path = os.path.join(self.PATH, "backend", "HomeAssistant.py")
-        self.launch_backend(backend_path=backend_path, open_in_terminal=False)
+        self.launch_backend(backend_path=backend_path, open_in_terminal=True)
 
         self.backend.set_host(host)
         self.backend.set_port(port)
         self.backend.set_ssl(ssl)
         self.backend.set_token(token)
 
+
+    @log_method_call
     def set_settings(self, settings):
         super().set_settings(settings)
 
