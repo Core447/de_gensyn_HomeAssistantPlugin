@@ -1,9 +1,10 @@
+import os
+
 from plugins.de_gensyn_HomeAssistantPlugin.const import EMPTY_STRING, HOME_ASSISTANT, SETTING_HOST, SETTING_PORT, \
     SETTING_SSL, SETTING_TOKEN
 
 from src.backend.PluginManager.ActionHolder import ActionHolder
 from src.backend.PluginManager.PluginBase import PluginBase
-from .HomeAssistant import HomeAssistantBackend
 from .actions.HomeAssistantAction.HomeAssistantAction import HomeAssistantAction
 
 
@@ -32,7 +33,9 @@ class HomeAssistant(PluginBase):
         ssl = settings.setdefault(SETTING_SSL, True)
         token = settings.setdefault(SETTING_TOKEN, EMPTY_STRING)
 
-        self.backend = HomeAssistantBackend()
+        backend_path = os.path.join(self.PATH, "backend", "HomeAssistant.py")
+        self.launch_backend(backend_path=backend_path, open_in_terminal=False)
+
         self.backend.set_host(host)
         self.backend.set_port(port)
         self.backend.set_ssl(ssl)

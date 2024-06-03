@@ -1,3 +1,5 @@
+import plugins.de_gensyn_HomeAssistantPlugin.backend.const as backend
+
 EMPTY_STRING = ""
 HOME_ASSISTANT = "Home Assistant"
 
@@ -94,9 +96,9 @@ DEFAULT_TEXT_SIZE = 20
 DEFAULT_TEXT_SHOW_UNIT = False
 DEFAULT_TEXT_UNIT_LINE_BREAK = False
 
-CONNECTED = "Connected"
-CONNECTING = "Connecting"
-DISCONNECTING = "Disconnecting"
-NOT_CONNECTED = "Not connected"
-AUTHENTICATING = "Authenticating"
-WAITING_FOR_RETRY = "Waiting for retry"
+CONNECTED = backend.CONNECTED
+CONNECTING = backend.CONNECTING
+DISCONNECTING = backend.DISCONNECTING
+NOT_CONNECTED = backend.NOT_CONNECTED
+AUTHENTICATING = backend.AUTHENTICATING
+WAITING_FOR_RETRY = backend.WAITING_FOR_RETRY

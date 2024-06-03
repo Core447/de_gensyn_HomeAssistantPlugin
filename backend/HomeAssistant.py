@@ -4,9 +4,10 @@ from time import sleep
 from typing import Dict, Callable, Any, List
 
 from loguru import logger as log
-from plugins.de_gensyn_HomeAssistantPlugin.const import CONNECTED, CONNECTING, DISCONNECTING, NOT_CONNECTED, \
-    AUTHENTICATING, WAITING_FOR_RETRY
+from streamcontroller_plugin_tools import BackendBase
 from websocket import create_connection, WebSocket
+
+from const import CONNECTED, CONNECTING, DISCONNECTING, NOT_CONNECTED, AUTHENTICATING, WAITING_FOR_RETRY
 
 HASS_WEBSOCKET_API = "/api/websocket?latest"
 
@@ -33,7 +34,7 @@ PING_INTERVAL = 30
 RETRY_CONNECTION = False
 
 
-class HomeAssistantBackend:
+class HomeAssistantBackend(BackendBase):
     _websocket: WebSocket = None
     _changes_websocket: WebSocket = None
     _message_id: int = 0
@@ -521,3 +522,6 @@ def _get_field_from_message(message: str, field: str) -> Any:
     except json.JSONDecodeError:
         log.error(f"Could not parse {message}")
         return ""
+
+
+backend = HomeAssistantBackend()
