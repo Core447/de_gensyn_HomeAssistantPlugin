@@ -289,7 +289,10 @@ class HomeAssistantBackend(BackendBase):
                 }
 
                 for action_entity_updated in actions:
-                    action_entity_updated(entity_id, update_state)
+                    try:
+                        action_entity_updated(entity_id, update_state)
+                    except Exception as e:
+                        log.exception(e)
 
         self._websocket.close()
         self._connection_status_callback(NOT_CONNECTED)
